@@ -1,28 +1,45 @@
 #pragma once
 
+#include <algorithm>
+#include <cctype>
+#include <regex>
+#include <ranges>
+#include <string>
+#include <vector>
+#include <numeric>
+
 namespace Utility
 {
 #define STR_TRANSFORM(f) std::transform(str.cbegin(), str.cend(), str.begin(), [](int c) { return f(c); });
 
 	template <class T>
-	constexpr void ToLower(T& str)	{		STR_TRANSFORM(std::tolower);	}
+	constexpr void ToLower(T& str) { STR_TRANSFORM(std::tolower); }
+
 	template <class T>
-	constexpr void ToUpper(T& str)	{		STR_TRANSFORM(std::toupper);	}
+	constexpr T ToUpper(T str)
+	{
+		STR_TRANSFORM(std::toupper);
+		return str;
+	}
+
+
 	template <class T>
 	constexpr T CastLower(T str) { ToLower(str); return str; }
+
 	template <class T>
 	constexpr T CastUpper(T str) { ToUpper(str); return str; }
 
 #undef STR_TRANSFORM
 
-  template <class T>
-	inline std::vector<T> StringSplit(T& a_str, std::string_view a_delimiter)
+	template <class T>
+	inline std::vector<T> StringSplit(T a_str, std::string_view a_delimiter)
 	{
 		auto range = a_str | std::ranges::views::split(a_delimiter);
 		return { range.begin(), range.end() };
 	}
 
-  template <class T>
+
+	template <class T>
 	static inline std::string StringJoin(const std::vector<T>& a_vec, std::string_view a_delimiter)
 	{
 		return std::accumulate(a_vec.begin(), a_vec.end(), std::string{},
@@ -50,4 +67,9 @@ namespace Utility
 		return str;
 	}
 
-}	 // namespace String
+	static inline std::string CastLowerFilename(const std::string& filename)
+	{
+		return CastLower(filename);
+	}
+
+}  // namespace Utility

@@ -183,7 +183,7 @@ namespace Adversity
 		inline void Read(const YAML::Node& a_node)
 		{
 			for (YAML::const_iterator it = a_node.begin(); it != a_node.end(); ++it) {
-				const auto key = Utility::CastLowerit->first.as<std::string>());
+				const auto key = Utility::CastLower(it)->first.as<std::string>();
 
 				if (it->second.IsSequence()) {
 					_data[key] = ParseData(it->second.as<std::vector<std::string>>(std::vector<std::string>{}));
@@ -277,7 +277,7 @@ namespace Adversity
 		template<typename T>
 		inline bool HasValue(const std::string& a_key) const
 		{
-			const auto key{ Utility::CastLowera_key) };
+			const auto key{ Utility::CastLower(a_key) };
 
 			const auto iter = _data.find(key);
 			if (iter == _data.end()) {
@@ -295,7 +295,7 @@ namespace Adversity
 		template <typename T>
 		inline T GetValue(const std::string& a_key, T a_default) const
 		{
-			const auto key{ Utility::CastLowera_key) };
+			const auto key{ Utility::CastLower(a_key) };
 
 			const auto iter = _data.find(key);
 			if (iter == _data.end()) {
@@ -313,7 +313,7 @@ namespace Adversity
 		template <typename T>
 		inline void SetValue(const std::string& a_key, T a_value)
 		{
-			const auto key{ Utility::CastLowera_key) };
+			const auto key{ Utility::CastLower(a_key) };
 			GenericData value{ a_value };
 			_data[key] = value;
 		}
@@ -321,7 +321,7 @@ namespace Adversity
 		static GenericData ConvertToGeneric(const std::string& a_str)
 		{
 			GenericData value = a_str;
-			if (Utility::CastLowera_str) == "none") {
+			if ((Utility::CastLower(a_str)) == "none") {
 				value = nullptr;
 			} else if (const auto form = Utility::FormFromString<RE::TESForm*>(a_str)) {
 				value = form;

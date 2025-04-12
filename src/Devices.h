@@ -25,7 +25,7 @@ namespace Adversity
 	{
 	public:
 		static void Init();
-		static void Load(std::string a_context);
+		static void Load(const std::string& a_context);
 		static std::vector<RE::TESObjectARMO*> GetDevicesByKeyword(std::string a_context, RE::Actor* a_actor, RE::BGSKeyword* a_kwd);
 		static inline std::vector<RE::BGSKeyword*> GetExclKwds() { return _excludeKwds; }
 		static bool DeviceMatches(std::string a_name, std::vector<std::string> a_filters);

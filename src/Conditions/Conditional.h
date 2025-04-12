@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ConditionParser.h"
-#include "Utility/Script.h"
 
 namespace Conditions
 {

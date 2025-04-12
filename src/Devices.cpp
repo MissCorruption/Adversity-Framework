@@ -16,59 +16,56 @@ void Devices::Init()
 	Devices::Load("default");
 }
 
-void Devices::Load(std::string a_context)
+void Devices::Load(const std::string& a_context)
 {
-	_devices[a_context].clear();
-	_sets[a_context].clear();
+    _devices[a_context].clear();
+    _sets[a_context].clear();
 
-	const std::string dir{ a_context == "default" ? "data/skse/adversityframework/" : std::format("data/skse/adversityframework/contexts/{}/Config/", a_context) };
-	const std::string base{ dir + "devices.json" };
+    const std::string dir = (a_context == "default")
+        ? "data/skse/adversityframework/"
+        : std::format("data/skse/adversityframework/contexts/{}/Config/", a_context);
+    const std::string base = dir + "devices.json";
 
-	if (!fs::exists(base)) {
-		logger::warn("{} context has no devices config", a_context);
-		return;
-	}
+    if (!fs::exists(base)) {
+        logger::warn("{} context has no devices config", a_context);
+        return;
+    }
 
-	const std::string custom{ dir + "devices.custom.json" };
+    const std::string custom = dir + "devices.custom.json";
+    const std::string& path = fs::exists(custom) ? custom : base;
 
-	const auto& path = fs::exists(custom) ? custom : base;
+    logger::info("{} file - {}", a_context, path);
 
-	logger::info("{} file - {}", a_context, path);
+    try {
+        std::ifstream file(path);
+        auto data = json::parse(file);
+        for (auto& [key, node] : data.items()) {
+            std::string field = Utility::CastLower(key);
+            if (field == "sets") {
+                const auto sets = node.template get<std::vector<std::string>>();
+                _sets[a_context].reserve(sets.size());
+                std::transform(sets.begin(), sets.end(), std::back_inserter(_sets[a_context]),
+                    [](const std::string& a_str) { return Utility::CastLower(a_str); });
+            } else if (field.starts_with("zad_")) {
+                const auto devices = node.template get<std::vector<Device>>();
+                std::vector<Device> valid;
+                std::copy_if(devices.begin(), devices.end(), std::back_inserter(valid),
+                    [](const Device& a_device) { return a_device.armo != nullptr; });
 
-	try {
-		std::ifstream file(path);
-		auto data = json::parse(file);
-		for (auto& [key, node] : data.items()) {
-			auto field = Utility::CastLowerkey);
-			if (field == "sets") {
-				const auto sets = node.template get<std::vector<std::string>>();
-				_sets[a_context].reserve(sets.size());
-				std::transform(sets.begin(), sets.end(), std::back_inserter(_sets[a_context]), [](std::string a_str) {
-					return Utility::CastLowera_str);
-				});
-			} else if (field.starts_with("zad_")) {
-
-				const auto devices = node.template get<std::vector<Device>>();
-
-				std::vector<Device> valid;
-				std::copy_if(devices.begin(), devices.end(), std::back_inserter(valid), [=](Device a_device) {
-					return a_device.armo != nullptr;
-				});
-
-				_devices[a_context][field] = valid;
-				for (auto& device : _devices[a_context][field]) {
-					_pieces[device.armo->GetFormID()] = &device;
-				}
-			}
-		}
-
-		logger::info("loaded devices from {} successfully", a_context);
-	} catch (std::exception& e) {
-		logger::error("failed to parse devices {} due to {}", path, e.what());
-	} catch (...) {
-		logger::error("failed to parse devices {}", path);
-	}
+                _devices[a_context][field] = valid;
+                for (auto& device : _devices[a_context][field]) {
+                    _pieces[device.armo->GetFormID()] = &device;
+                }
+            }
+        }
+        logger::info("Loaded devices from {} successfully", a_context);
+    } catch (const std::exception& e) {
+        logger::error("Failed to parse devices {} due to {}", path, e.what());
+    } catch (...) {
+        logger::error("Failed to parse devices {}", path);
+    }
 }
+
 
 std::vector<RE::TESObjectARMO*> Devices::GetDevicesByKeyword(std::string a_context, RE::Actor* a_actor, RE::BGSKeyword* a_kwd)
 {
@@ -92,7 +89,7 @@ std::vector<RE::TESObjectARMO*> Devices::GetDevicesByKeyword(std::string a_conte
 				const std::string name{ armor->GetName() };
 				
 				for (const auto& set : sets) {
-					if (Utility::CastLowername).starts_with(set)) {
+					if (Utility::CastLower(name).starts_with(set)) {
 						hasSets.insert(set);
 
 						if (entry->IsWorn()) {
@@ -103,7 +100,7 @@ std::vector<RE::TESObjectARMO*> Devices::GetDevicesByKeyword(std::string a_conte
 			} else if (armor->HasKeyword(_lockableKwd)) { // rendered device
 				for (const auto& kwd : armor->GetKeywords()) {
 					std::string name{ kwd->GetFormEditorID() };
-					if (Utility::CastLowername).starts_with("zad_devious")) {
+					if (Utility::CastLower(name).starts_with("zad_devious")) {
 						seenKwds.insert(kwd);
 					}
 				}
@@ -119,7 +116,7 @@ std::vector<RE::TESObjectARMO*> Devices::GetDevicesByKeyword(std::string a_conte
 	std::vector<RE::TESObjectARMO*> filteredByHasSets;
 
 	const auto& deviceMap = _devices.count(a_context) ? _devices[a_context] : _devices["default"];
-	const std::string kwdName{ Utility::CastLowera_kwd->GetFormEditorID()) };
+	const std::string kwdName{ Utility::CastLower(a_kwd)->GetFormEditorID() };
 	
 	if (deviceMap.count(kwdName)) {
 		const auto& [_, devicesList] = *deviceMap.find(kwdName);
@@ -139,7 +136,7 @@ std::vector<RE::TESObjectARMO*> Devices::GetDevicesByKeyword(std::string a_conte
 				valid.push_back(device.armo);
 
 				for (const auto& set : sets) {
-					if (Utility::CastLowerdevice.name).starts_with(set)) {
+					if (Utility::CastLower(device.name).starts_with(set)) {
 						filteredBySet.push_back(armo);
 
 						if (hasSets.contains(set)) {
@@ -175,7 +172,7 @@ std::vector<RE::TESObjectARMO*> Devices::GetDevicesByKeyword(std::string a_conte
 bool Devices::DeviceMatches(std::string a_name, std::vector<std::string> a_filters)
 {
 	for (const auto& cont : a_filters) {
-		if (Utility::CastLowera_name).find(Utility::CastLowercont)) != std::string::npos) {
+		if (Utility::CastLower(a_name).find(Utility::CastLower(cont)) != std::string::npos) {
 			return true;
 		}
 	}

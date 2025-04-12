@@ -1,6 +1,7 @@
 #pragma once
 #include <SKSE/SKSE.h>
 #include "Util.h"
+#include "Util/FormLookup.h"
 
 namespace Adversity::Serialization
 {
@@ -36,12 +37,6 @@ namespace Adversity::Serialization
 		return name;
 	}
 
-	template <>
-	inline RE::TESForm* Read<RE::TESForm*>(SKSE::SerializationInterface* serde)
-	{
-		return Utility::FormFromString(Read<std::string>(serde));
-	}
-
 	template <class T>
 	inline void Read(SKSE::SerializationInterface* serde, std::vector<T>& a_values)
 	{
@@ -51,14 +46,12 @@ namespace Adversity::Serialization
 		}
 	}
 	
-	template <class T>
-		requires IsVector<T>::value
-	inline T Read(SKSE::SerializationInterface* serde)
+	template <>
+	inline RE::TESForm* Read<RE::TESForm*>(SKSE::SerializationInterface* serde)
 	{
-		T values;
-		Read(serde, values);
-		return values;
+		return Utility::FormFromString<RE::TESForm*>(Read<std::string_view>(serde));
 	}
+
 
 
 	template <typename T>
